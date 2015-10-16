@@ -2,6 +2,7 @@
 
 import requests
 import re
+import json
 
 base_url = "http://flights.ctrip.com/booking/BJS-YNZ-day-1.html"
 
@@ -31,4 +32,11 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2490.71 Safari/537.36'
 }
 flights_response = requests.get(default_url, headers=headers)
-print flights_response.text
+flights_response_json = json.loads(flights_response.text)
+
+# dic {ZH: "深圳航空", CA: "中国国航"}
+print flights_response_json["als"]
+# dic {YNZ0: "南洋国际机场", PEK3: "首都国际机场T3"}
+print flights_response_json["apb"]
+# list [{dcc: "BJS", acc: "YNZ", dtr: "", atr: "", nd: 0, rlp: 0, fx: 0,…},…]
+print flights_response_json["fis"]
