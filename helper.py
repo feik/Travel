@@ -1,7 +1,9 @@
+# -*- coding:utf-8 -*-
+
 import collections
 import re
 import requests
-
+from itertools import combinations
 
 class Helper:
     def __init__(self):
@@ -44,5 +46,31 @@ class Helper:
     @staticmethod
     def get_same_province_cities_by_city(province_city_simple=[], city_name=None):
         for item in province_city_simple:
-            if city_name in item["cities"]:
+            if city_name.decode("utf-8") in item["cities"]:
                 return item["cities"]
+
+    @staticmethod
+    def generate_one_trip_travel_list(province_city_simple, start_city, end_city):
+        alter_cities = Helper.get_same_province_cities_by_city(province_city_simple, end_city)
+
+        one_trip_list = []
+        for city_name in alter_cities:
+            temp_list = []
+            if city_name is not end_city:
+                temp_list.append(start_city.decode("utf-8"))
+                temp_list.append(city_name)
+                temp_list.append(end_city.decode("utf-8"))
+                one_trip_list.append(temp_list)
+        return one_trip_list
+
+    @staticmethod
+    def generate_two_trip_travel_list(province_city_simple, start_city, end_city):
+        alter_cities = Helper.get_same_province_cities_by_city(province_city_simple, end_city)
+        temp_alter_list = list(combinations(alter_cities, 2))
+        two_trips_list = []
+        for alter_city_name in temp_alter_list:
+            if end_city not in temp_alter_list:
+                temp_tuple = (start_city.decode("utf-8"), ) + alter_city_name + (end_city.decode("utf-8"), )
+                two_trips_list.append(temp_tuple)
+
+        return two_trips_list
