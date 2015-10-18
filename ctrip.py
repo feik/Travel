@@ -227,22 +227,67 @@ class Train:
 
     @staticmethod
     def generate_price_class(base_text):
-        m = re.findall(r"\.([a-z0-9]+)\{display\:\}", base_text.replace(" ", ""))
+        m = re.findall(r"\.([a-z0-9]+)\{(?:display)?\:?\}", base_text.replace(" ", ""))
         return m
 
-train = Train("北京", "盐城", "2015-11-07")
-train.get_train_list()
+# train = Train("北京", "盐城", "2015-11-07")
+# train.get_train_list()
+
 
 # * 北京到盐城 11-07 直达汽车票
 class Bus:
-    base_url = ""
+    base_url = start_city_code = end_city_code = start_date_length = start_date = ""
+    start_city = end_city = ""
 
-    def __init__(self, base_url="http://bus.ctrip.com/busList.html?from=%E5%8C%97%E4%BA%AC&to=%E7%9B%90%E5%9F%8E"
-                                "&date=2015-11-07"):
-        self.base_url = base_url
+    headers = {
+        'Accept': '*/*',
+        'Accept-Encoding': 'gzip, deflate, sdch',
+        'Accept-Language': 'zh-CN,zh;q=0.8,en;q=0.6,ja;q=0.4',
+        'Connection': 'keep-alive',
+        'Cookie': '',
+        'DNT': '1',
+        'Host': 'flights.ctrip.com',
+        'Referer': 'http://flights.ctrip.com/booking/BJS-YNZ-day-1.html',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_0) AppleWebKit/537.36 (KHTML, like Gecko) '
+                      'Chrome/46.0.2490.71 Safari/537.36'
+    }
+
+    def __init__(self, start_city, end_city, start_date=None):
+        self.start_city = start_city
+        self.end_city = end_city
+        self.start_date = start_date
+
+        encode_start_city = urllib.quote_plus(self.start_city)
+        encode_end_city = urllib.quote_plus(self.end_city)
+
+        self.base_url = "http://bus.ctrip.com/busList.html" \
+                        "?from={0}&to={1}&date={2}"\
+                        .format(encode_start_city, encode_end_city, self.start_date)
+        self.headers["Referer"] = self.base_url
 
     def get_bus_list(self):
         base_response = requests.get(self.base_url)
-        base_text = base_response.text
+        # 取unicode编码的text会乱码
+        base_text = base_response.content
 
+        soup = BeautifulSoup(base_text, "html5lib")
+        tr_list = soup.find(id='tb_railway_list').find_all('tr')
+        bus_ret = {}
+        for tr in tr_list:
+            if tr.find(class_="railway_time") is not None:
+                bus_ret["start_city"] = self.start_city
+                bus_ret["end_city"] = self.end_city
 
+                bus_ret["start_time"] = tr.find(class_="railway_time").get_text()
+
+                from_to_tag = tr.find(class_="icon_start").find_parent("td")
+                bus_ret["from_to"] = from_to_tag.get_text(" - ", strip=True)
+                bus_ret["bus_code"] = from_to_tag.find_next_sibling("td").get_text(" - ", strip=True)
+                bus_ret["price"] = tr.find(class_="price").find(class_="base_price").get_text()
+                bus_ret["enable_book"] = tr.find(class_="btn_book")["value"]
+
+                print "{0}到{1}在{2}的直达汽车：".format(self.start_city, self.end_city, self.start_date)
+                print json.dumps(bus_ret, ensure_ascii=False)
+
+bus = Bus("北京", "盐城", "2015-11-07")
+bus.get_bus_list()
