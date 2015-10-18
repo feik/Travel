@@ -1,39 +1,12 @@
 # -*- coding:utf-8 -*-
 
+from helper import Helper
 import requests
 import re
 import simplejson as json
-import collections
 import datetime
 import urllib
 from bs4 import BeautifulSoup
-
-
-class Helper:
-    def __init__(self):
-        pass
-
-    @staticmethod
-    def convert(data):
-        if isinstance(data, basestring):
-            return str(data)
-        elif isinstance(data, collections.Mapping):
-            return dict(map(Helper.convert, data.iteritems()))
-        elif isinstance(data, collections.Iterable):
-            return type(data)(map(Helper.convert, data))
-        else:
-            return data
-
-    @staticmethod
-    def get_city_code(city_url, city_name):
-        city_response = requests.get(city_url)
-        city_text = city_response.text
-
-        city_text_reg = re.search(r'data\:\"\|' + city_name + '\|(.*?)\"',
-                                  city_text.replace(" ", "").encode("utf-8"))
-        city_code = city_text_reg.group(1)
-
-        return city_code
 
 
 # * 北京到盐城 11-07 直达航班
@@ -124,10 +97,6 @@ class Flight:
 
         default_url += "&rk=" + rk + "&r=" + r
         return default_url
-
-
-# flight = Flight("北京", "盐城", "2015-11-07")
-# flight.get_flight_list()
 
 
 # * 北京到盐城 11-07 直达火车票
@@ -230,9 +199,6 @@ class Train:
         m = re.findall(r"\.([a-z0-9]+)\{(?:display)?\:?\}", base_text.replace(" ", ""))
         return m
 
-# train = Train("北京", "盐城", "2015-11-07")
-# train.get_train_list()
-
 
 # * 北京到盐城 11-07 直达汽车票
 class Bus:
@@ -288,6 +254,3 @@ class Bus:
 
                 print "{0}到{1}在{2}的直达汽车：".format(self.start_city, self.end_city, self.start_date)
                 print json.dumps(bus_ret, ensure_ascii=False)
-
-bus = Bus("北京", "盐城", "2015-11-07")
-bus.get_bus_list()
